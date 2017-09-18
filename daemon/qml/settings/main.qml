@@ -9,11 +9,16 @@ import org.nemomobile.dbus 2.0
 Page {
     id: page
 
-    ConfigurationGroup {
-        id: dconf
-        path: "/apps/ssh-pam-access-control"
-        property bool allowAuto: false
-        property var allowedHosts: []
+    ConfigurationValue {
+        id: allowAuto
+        key: "/apps/ssh-pam-access-control/allowAuto"
+        defaultValue: false
+    }
+
+    ConfigurationValue {
+        id: allowedHosts
+        key: "/apps/ssh-pam-access-control/allowedHosts"
+        defaultValue: []
     }
 
     DBusInterface {
@@ -86,8 +91,8 @@ Page {
             TextSwitch {
                 width: parent.width
                 text: "Don't ask for confirmation, only notify"
-                checked: dconf.allowAuto
-                onClicked: dconf.allowAuto = checked
+                checked: allowAuto.value
+                onClicked: allowAuto.value = checked
             }
 
             ValueButton {
@@ -161,14 +166,14 @@ Page {
             }
 
             Label {
-                visible: dconf.allowedHosts.length == 0
+                visible: allowedHosts.value.length == 0
                 x: Theme.paddingLarge
                 text: "Empty"
             }
 
             Repeater {
                 width: parent.width
-                model: dconf.allowedHosts
+                model: allowedHosts.value
                 delegate: whitelistDelegate
             }
 
@@ -183,10 +188,10 @@ Page {
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
                 EnterKey.onClicked: {
                     visible = false
-                    var val = dconf.allowedHosts
+                    var val = allowedHosts.value
                     if (val.indexOf(addField.text) == -1) {
                         val.splice(0, 0, addField.text)
-                        dconf.allowedHosts = val
+                        allowedHosts.value = val
                     }
                 }
             }
@@ -227,9 +232,9 @@ Page {
                 }
                 icon.source: "image://theme/icon-m-remove"
                 onClicked: {
-                    var val = dconf.allowedHosts
+                    var val = allowedHosts.value
                     val.splice(val.indexOf(modelData), 1)
-                    dconf.allowedHosts = val
+                    allowedHosts.value = val
                 }
             }
         }
