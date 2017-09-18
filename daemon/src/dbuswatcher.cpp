@@ -6,6 +6,7 @@
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QQuickItem>
+#include <QHostAddress>
 
 #include <QDebug>
 
@@ -68,22 +69,25 @@ void DBusWatcher::onRequestAccess(const QString &pamRUser, const QString &pamRHo
     connection["service"] = service;
 
     QStringList allowed = allowedHosts->value().toStringList();
-    if (allowed.contains(pamRHost)) {
+    QHostAddress h(pamRHost);
+    for (const auto &i: allowed) {
+        if (i == pamRHost || h.isInSubnet(QHostAddress::parseSubnet(i))) {
+            sendResult(0, service);
+            return;
+        }
+    }
+
+    bool allow = autoAllow->value(false).toBool();
+    notifyConnection(connection, !allow);
+
+    if (allow) {
         sendResult(0, service);
     }
     else {
-        bool allow = autoAllow->value(false).toBool();
-        notifyConnection(connection, !allow);
+        pendingConnections.append(connection);
 
-        if (allow) {
-            sendResult(0, service);
-        }
-        else {
-            pendingConnections.append(connection);
-
-            if (pendingConnections.length() == 1) {
-                showDialog();
-            }
+        if (pendingConnections.length() == 1) {
+            showDialog();
         }
     }
 }
